@@ -1,10 +1,12 @@
+// models/Order.js
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
-    customer_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    restaurant_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', required: true },
-    status: { type: String, enum: ['preparing', 'out for delivery', 'delivered'], default: 'preparing' },
-    total_price: { type: Number, required: true },
+    customer_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    restaurant_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant' },
+    items: [{ type: mongoose.Schema.Types.ObjectId, ref: 'OrderItem' }],
+    status: { type: String, enum: ['placed', 'cancelled', 'rescheduled'], default: 'placed' },
+    scheduledTime: { type: Date }, // Optional scheduled time for rescheduling
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 });

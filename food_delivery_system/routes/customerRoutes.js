@@ -3,7 +3,7 @@ const { browseRestaurants, searchMenus, placeOrder, trackOrder, viewOrderHistory
 const authMiddleware = require('../middlewares/authMiddleware');
 const router = express.Router();
 
-router.use(authMiddleware);
+
 
 /**
  * @swagger
@@ -22,7 +22,7 @@ router.use(authMiddleware);
  *       200:
  *         description: List of restaurants
  */
-router.get('/restaurants', browseRestaurants);
+router.get('/restaurants',authMiddleware("Customer"), browseRestaurants);
 
 /**
  * @swagger
@@ -40,7 +40,7 @@ router.get('/restaurants', browseRestaurants);
  *       200:
  *         description: List of menu items
  */
-router.get('/menus', searchMenus);
+router.get('/menus',authMiddleware("Customer"), searchMenus);
 
 /**
  * @swagger
@@ -78,7 +78,7 @@ router.get('/menus', searchMenus);
  *       400:
  *         description: Bad request
  */
-router.post('/orders', placeOrder);
+router.post('/orders',authMiddleware("Customer"), placeOrder);
 
 /**
  * @swagger
@@ -99,7 +99,7 @@ router.post('/orders', placeOrder);
  *       404:
  *         description: Order not found
  */
-router.get('/orders/:orderId', trackOrder);
+router.get('/orders/:orderId',authMiddleware("Customer"), trackOrder);
 
 /**
  * @swagger
@@ -111,6 +111,6 @@ router.get('/orders/:orderId', trackOrder);
  *       200:
  *         description: List of past orders
  */
-router.get('/order-history', viewOrderHistory);
+router.get('/order-history',authMiddleware("Customer"),viewOrderHistory);
 
 module.exports = router;

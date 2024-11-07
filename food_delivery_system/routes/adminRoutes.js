@@ -1,13 +1,22 @@
 const express = require('express');
-const { manageUsers, viewAndManageOrders, generateReports, monitorPlatformActivity } = require('../controllers/adminController');
-const authMiddleware = require('../middlewares/authMiddleware');
 const router = express.Router();
+const adminController = require('../controllers/adminController');
+const auth = require('../middlewares/authMiddleware');  // Ensure JWT and role-based access
 
-router.use(authMiddleware);
+// Manage Users (Create, Update, Deactivate)
+router.post('/users', auth('Administrator'), adminController.createUser);
+//router.post('/users', adminController.createUser);
+router.put('/users/:id', auth('Administrator'), adminController.updateUser);
+router.delete('/users/:id', auth('Administrator'), adminController.deactivateUser);
 
-router.post('/users', manageUsers);
-router.get('/orders', viewAndManageOrders);
-router.get('/reports', generateReports);
-router.get('/activity', monitorPlatformActivity);
+// View and Manage Orders
+router.get('/orders', auth('Administrator'), adminController.viewOrders);
+router.put('/orders/:id', auth('Administrator'), adminController.manageOrder);
+
+// Generate Reports
+router.get('/reports/popular-restaurants', auth('Administrator'), adminController.generatePopularRestaurantsReport);
+
+// Monitor Platform Activity
+router.get('/activity', auth('Administrator'), adminController.monitorActivity);
 
 module.exports = router;

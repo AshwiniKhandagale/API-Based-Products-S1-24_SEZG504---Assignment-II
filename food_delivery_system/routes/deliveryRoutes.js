@@ -1,5 +1,5 @@
 const express = require('express');
-const { viewAvailableDeliveries, trackDeliveryStatus, manageDeliveryAvailability } = require('../controllers/deliveryController');
+const { viewAvailableDeliveries,acceptDelivery, trackDeliveryStatus, manageDeliveryAvailability } = require('../controllers/deliveryController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const router = express.Router();
 
@@ -22,7 +22,40 @@ router.use(authMiddleware);
  *       200:
  *         description: List of available deliveries
  */
-router.get('/available-deliveries', viewAvailableDeliveries);
+router.get('/available-deliveries',authMiddleware("Delivery Personnel"), viewAvailableDeliveries);
+
+/**
+ * @swagger
+ * /api/deliveries/{deliveryId}/accept:
+ *   put:
+ *     summary: Accept a delivery
+ *     tags: [Deliveries]
+ *     parameters:
+ *       - in: path
+ *         name: deliveryId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Delivery ID to be accepted
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               deliveryPersonnelId:
+ *                 type: string
+ *                 description: ID of the delivery personnel accepting the delivery
+ *     responses:
+ *       200:
+ *         description: Delivery accepted
+ *       404:
+ *         description: Delivery not found
+ *       400:
+ *         description: Invalid delivery status
+ */
+router.put('/deliveries/:deliveryId/accept',authMiddleware("Delivery Personnel"), acceptDelivery);
 
 /**
  * @swagger
@@ -57,7 +90,7 @@ router.get('/available-deliveries', viewAvailableDeliveries);
  *       404:
  *         description: Delivery not found
  */
-router.put('/deliveries/:deliveryId', trackDeliveryStatus);
+router.put('/deliveries/:deliveryId',authMiddleware("Delivery Personnel"), trackDeliveryStatus);
 
 /**
  * @swagger
@@ -82,6 +115,6 @@ router.put('/deliveries/:deliveryId', trackDeliveryStatus);
  *       400:
  *         description: Bad request
  */
-router.put('/availability', manageDeliveryAvailability);
+router.put('/availability',authMiddleware("Delivery Personnel"), manageDeliveryAvailability);
 
 module.exports = router;

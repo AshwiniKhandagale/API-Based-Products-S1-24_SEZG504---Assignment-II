@@ -1,9 +1,12 @@
 const express = require('express');
-const { manageMenus, viewOrders, updateRestaurantDetails } = require('../controllers/restaurantController');
+const {
+    addRestaurant,
+    manageMenus,
+    viewOrders,
+    updateRestaurantDetails
+} = require('../controllers/restaurantController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const router = express.Router();
-
-router.use(authMiddleware);
 
 /**
  * @swagger
@@ -14,10 +17,45 @@ router.use(authMiddleware);
 
 /**
  * @swagger
+ * /api/restaurants:
+ *   post:
+ *     summary: Add a new restaurant
+ *     tags: [Restaurants]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - address
+ *               - hours_of_operation
+ *             properties:
+ *               name:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               hours_of_operation:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Restaurant created successfully
+ *       400:
+ *         description: Bad request
+ */
+router.post('/', authMiddleware('Restaurant Owner'), addRestaurant);
+
+/**
+ * @swagger
  * /api/restaurants/menus:
  *   post:
  *     summary: Manage restaurant menus
  *     tags: [Restaurants]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -44,7 +82,7 @@ router.use(authMiddleware);
  *       400:
  *         description: Bad request
  */
-router.post('/menus', manageMenus);
+router.post('/menus', authMiddleware('Restaurant Owner'), manageMenus);
 
 /**
  * @swagger
@@ -52,11 +90,15 @@ router.post('/menus', manageMenus);
  *   get:
  *     summary: View restaurant orders
  *     tags: [Restaurants]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: List of orders
+ *       500:
+ *         description: Error fetching orders
  */
-router.get('/orders', viewOrders);
+router.get('/orders', authMiddleware('Restaurant Owner'), viewOrders);
 
 /**
  * @swagger
@@ -64,6 +106,8 @@ router.get('/orders', viewOrders);
  *   put:
  *     summary: Update restaurant details
  *     tags: [Restaurants]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -87,6 +131,6 @@ router.get('/orders', viewOrders);
  *       400:
  *         description: Bad request
  */
-router.put('/details', updateRestaurantDetails);
+router.put('/details', authMiddleware('Restaurant Owner'), updateRestaurantDetails);
 
 module.exports = router;
