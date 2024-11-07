@@ -1,4 +1,6 @@
 // models/CustomerModel.js
+
+//THIS MODEL IS NOT BEING USED
 const mongoose = require('mongoose');
 
 const customerSchema = new mongoose.Schema({
