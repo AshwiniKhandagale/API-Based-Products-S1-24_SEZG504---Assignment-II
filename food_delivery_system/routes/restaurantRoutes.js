@@ -3,7 +3,8 @@ const {
     addRestaurant,
     manageMenus,
     viewOrders,
-    updateRestaurantDetails
+    updateRestaurantDetails,
+    deleteFoodMenu
 } = require('../controllers/restaurantController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const router = express.Router();
