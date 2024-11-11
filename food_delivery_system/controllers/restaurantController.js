@@ -99,9 +99,43 @@ const updateRestaurantDetails = async (req, res) => {
     }
 };
 
+//remove item from menu
+const deleteFoodMenu = async(req, res) =>{
+    try {
+        const foodId = req.params.id;
+        console.log(foodId);
+        if (!foodId) {
+          return res.status(404).send({
+            success: false,
+            message: "provide food id",
+          });
+        }
+        const food = await Menu.findById(foodId);
+        if (!food) {
+          return res.status(404).send({
+            success: false,
+            message: "No Food Found with id",
+          });
+        }
+        await Menu.findByIdAndDelete(foodId);
+        res.status(200).send({
+          success: true,
+          message: "Food Item Deleted ",
+        });
+      } catch (error) {
+        console.log(error);
+        res.status(500).send({
+          success: false,
+          message: "Eror In Delete Food APi",
+          error,
+        });
+      }
+};
+
 module.exports = {
     addRestaurant,
     manageMenus,
     viewOrders,
-    updateRestaurantDetails
+    updateRestaurantDetails,
+    deleteFoodMenu
 };
