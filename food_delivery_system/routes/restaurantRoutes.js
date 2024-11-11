@@ -133,4 +133,7 @@ router.get('/orders', authMiddleware('Restaurant Owner'), viewOrders);
  */
 router.put('/details', authMiddleware('Restaurant Owner'), updateRestaurantDetails);
 
+//to delete item from food menu
+router.delete('/deletemenu/:id', authMiddleware('Restaurant Owner'), deleteFoodMenu);
+
 module.exports = router;
