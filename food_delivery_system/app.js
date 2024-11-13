@@ -23,6 +23,16 @@ app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/deliveries', deliveryRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+app.get('/swagger.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(specs); // Sends the generated Swagger spec as JSON
+});
+
+const yaml = require('js-yaml');
+app.get('/swagger.yaml', (req, res) => {
+    res.setHeader('Content-Type', 'application/x-yaml');
+    res.send(yaml.dump(specs)); 
+});
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
