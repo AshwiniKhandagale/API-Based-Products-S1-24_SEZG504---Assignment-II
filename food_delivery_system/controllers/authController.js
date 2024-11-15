@@ -8,8 +8,15 @@ exports.register = async (req, res, next) => {
         return next(createError(400, 'Invalid input'));
     }
 
+    const { email, password, role, profile } = req.body;
+
     try {
-        const user = await registerUser(req.body);
+        const user = await registerUser({
+            email,
+            password,
+            role,
+            profile
+        });
         res.status(201).json({ message: 'User registered successfully', user });
     } catch (error) {
         next(error);

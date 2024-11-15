@@ -22,16 +22,48 @@ const router = express.Router();
  *           schema:
  *             type: object
  *             required:
- *               - name
  *               - email
  *               - password
+ *               - role
  *             properties:
- *               name:
- *                 type: string
  *               email:
  *                 type: string
  *               password:
  *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: ['Customer', 'Restaurant Owner', 'Delivery Personnel', 'Administrator']
+ *               profile:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                   contactDetails:
+ *                     type: string
+ *                   address:
+ *                     type: string
+ *                   deliveryAddress:
+ *                     type: object
+ *                     properties:
+ *                       street:
+ *                         type: string
+ *                       city:
+ *                         type: string
+ *                       postalCode:
+ *                         type: string
+ *                       country:
+ *                         type: string
+ *                   vehicleType:
+ *                     type: string
+ *                   paymentDetails:
+ *                     type: object
+ *                     properties:
+ *                       cardNumber:
+ *                         type: string
+ *                       expirationDate:
+ *                         type: string
+ *                       cvv:
+ *                         type: string
  *     responses:
  *       201:
  *         description: User registered successfully
@@ -67,6 +99,5 @@ router.post('/register', register);
  *         description: Bad request
  */
 router.post('/login', login);
-
 
 module.exports = router;
