@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-
+const User = require('../models/User'); 
 // Define the schema for Restaurant
 const restaurantSchema = new Schema({
     owner_id: {
-        type: Schema.Types.ObjectId,
-        ref: 'User', // Reference to the User model (owner of the restaurant)
-        required: true
+      type: Schema.Types.ObjectId,
+      ref: 'User', // Reference to the User model
+      required: true
     },
     name: {
         type: String,

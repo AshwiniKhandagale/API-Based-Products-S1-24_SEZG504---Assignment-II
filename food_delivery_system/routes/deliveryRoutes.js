@@ -1,5 +1,5 @@
 const express = require('express');
-const { viewAvailableDeliveries,acceptDelivery, trackDeliveryStatus, manageDeliveryAvailability } = require('../controllers/deliveryController');
+const { viewAvailableDeliveries, acceptDelivery, trackDeliveryStatus, manageDeliveryAvailability } = require('../controllers/deliveryController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const router = express.Router();
 
@@ -18,11 +18,13 @@ router.use(authMiddleware);
  *   get:
  *     summary: View available deliveries
  *     tags: [Deliveries]
+ *     security:
+ *       - BearerAuth: []  # Apply the Bearer authentication
  *     responses:
  *       200:
  *         description: List of available deliveries
  */
-router.get('/available-deliveries',authMiddleware("Delivery Personnel"), viewAvailableDeliveries);
+router.get('/available-deliveries', authMiddleware("Delivery Personnel"), viewAvailableDeliveries);
 
 /**
  * @swagger
@@ -47,6 +49,8 @@ router.get('/available-deliveries',authMiddleware("Delivery Personnel"), viewAva
  *               deliveryPersonnelId:
  *                 type: string
  *                 description: ID of the delivery personnel accepting the delivery
+ *     security:
+ *       - BearerAuth: []  # Apply the Bearer authentication
  *     responses:
  *       200:
  *         description: Delivery accepted
@@ -55,7 +59,7 @@ router.get('/available-deliveries',authMiddleware("Delivery Personnel"), viewAva
  *       400:
  *         description: Invalid delivery status
  */
-router.put('/deliveries/:deliveryId/accept',authMiddleware("Delivery Personnel"), acceptDelivery);
+router.put('/deliveries/:deliveryId/accept', authMiddleware("Delivery Personnel"), acceptDelivery);
 
 /**
  * @swagger
@@ -82,6 +86,8 @@ router.put('/deliveries/:deliveryId/accept',authMiddleware("Delivery Personnel")
  *               status:
  *                 type: string
  *                 enum: [picked up, en route, delivered]
+ *     security:
+ *       - BearerAuth: []  # Apply the Bearer authentication
  *     responses:
  *       200:
  *         description: Delivery status updated
@@ -90,7 +96,7 @@ router.put('/deliveries/:deliveryId/accept',authMiddleware("Delivery Personnel")
  *       404:
  *         description: Delivery not found
  */
-router.put('/deliveries/:deliveryId',authMiddleware("Delivery Personnel"), trackDeliveryStatus);
+router.put('/deliveries/:deliveryId', authMiddleware("Delivery Personnel"), trackDeliveryStatus);
 
 /**
  * @swagger
@@ -109,12 +115,14 @@ router.put('/deliveries/:deliveryId',authMiddleware("Delivery Personnel"), track
  *             properties:
  *               available:
  *                 type: boolean
+ *     security:
+ *       - BearerAuth: []  # Apply the Bearer authentication
  *     responses:
  *       200:
  *         description: Delivery availability updated
  *       400:
  *         description: Bad request
  */
-router.put('/availability',authMiddleware("Delivery Personnel"), manageDeliveryAvailability);
+router.put('/availability', authMiddleware("Delivery Personnel"), manageDeliveryAvailability);
 
 module.exports = router;
