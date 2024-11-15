@@ -31,54 +31,82 @@ const searchMenus = async (req, res) => {
 // Place an order and create a delivery record
 const placeOrder = async (req, res) => {
     try {
-        const { customer_id, restaurant_name, items } = req.body;
+       
+        const customer_id = req.user.userId; // Access customer_id from authenticated user (via middleware)
+        const { restaurant_name, items } = req.body;
 
-        // Validate restaurant and menu items by name
         // Find restaurant by name
         const restaurant = await Restaurant.findOne({ name: restaurant_name });
-
         if (!restaurant) {
-            return res.status(400).send('Restaurant not found.');
+            return res.status(400).json({ message: 'Restaurant not found.' });
         }
 
-        // Find menu items by name and restaurant
+        // Validate menu items
         const menuItems = await Menu.find({
-            name: { $in: items.map(item => item.menu_name) }, // Using menu_name instead of menu_id
-            restaurant_id: restaurant._id  // Use the restaurant's ObjectId to filter
+            name: { $in: items.map(item => item.menu_name) },
+            restaurant_id: restaurant.owner_id
         });
 
-        // Check if all menu items are valid
         if (menuItems.length !== items.length) {
-            return res.status(400).send('Some menu items are invalid or not available in this restaurant.');
+            return res.status(400).json({ message: 'Some menu items are invalid or not available.' });
         }
 
-        // Create Order Items
+        // Create the order with customer_id
+        const newOrder = new Order({
+            customer_id,
+            restaurant_id: restaurant._id,
+            status: 'placed',
+            scheduledTime: null,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        });
+
+        await newOrder.save();
+
+        // Create order items
         const orderItems = await Promise.all(
             items.map(async (item) => {
                 const menuItem = menuItems.find(menu => menu.name === item.menu_name);
-                if (!menuItem) {
-                    throw new Error(`Menu item '${item.menu_name}' not found.`);
-                }
                 const orderItem = new OrderItem({
-                    order_id: null,  // Will be updated after the order is created
+                    order_id: newOrder._id,
                     customer_id,
                     restaurant_id: restaurant._id,
-                    menu_id: menuItem._id,  // Use the menu item ObjectId
+                    menu_id: menuItem._id,
                     quantity: item.quantity,
                     price: menuItem.price * item.quantity,
                     status: 'ordered',
+                    createdAt: new Date(),
+                    updatedAt: new Date()
                 });
                 await orderItem.save();
-                return orderItem;
+                return {
+                    id: orderItem._id,
+                    menu_name: menuItem.name,
+                    quantity: orderItem.quantity,
+                    price_per_item: menuItem.price,
+                    total_price: orderItem.price,
+                    status: orderItem.status,
+                    createdAt: orderItem.createdAt,
+                    updatedAt: orderItem.updatedAt
+                };
             })
         );
 
-        // Optionally, you can create an order record here after saving all order items
+        // Respond with order details
+        res.status(201).json({
+            id: newOrder._id,
+            customer_id: newOrder.customer_id,
+            restaurant_id: newOrder.restaurant_id,
+            status: newOrder.status,
+            scheduledTime: newOrder.scheduledTime,
+            createdAt: newOrder.createdAt,
+            updatedAt: newOrder.updatedAt,
+            order_items: orderItems
+        });
 
-        res.status(201).send('Order placed successfully!');
     } catch (error) {
         console.error('Error placing order:', error);
-        res.status(500).send('An error occurred while placing the order.');
+        res.status(500).json({ message: 'An error occurred while placing the order' });
     }
 };
 
@@ -87,19 +115,49 @@ const placeOrder = async (req, res) => {
 const trackOrder = async (req, res) => {
     try {
         const { orderId } = req.params;
-        const order = await Order.findById(orderId).populate('restaurant').populate('items.menu');
+
+        // Find the order and populate related fields
+        const order = await Order.findById(orderId)
+            .populate('restaurant_id', 'name address') // Populate restaurant details
+            .populate({
+                path: 'order_items', // Populate order items
+                populate: {
+                    path: 'menu_id', // Populate menu details within order items
+                    select: 'name price' // Select specific fields for menu
+                }
+            });
 
         if (!order) {
             return res.status(404).json({ message: 'Order not found' });
         }
 
-        res.status(200).json({
-            orderStatus: order.status,
-            estimatedDeliveryTime: order.estimatedDeliveryTime,
-            restaurant: order.restaurant,
-            items: order.items
-        });
+        // Format response with detailed order and item data
+        const response = {
+            order_id: order._id,
+            status: order.status,
+            scheduledTime: order.scheduledTime,
+            createdAt: order.createdAt,
+            updatedAt: order.updatedAt,
+            restaurant: {
+                id: order.restaurant_id._id,
+                name: order.restaurant_id.name,
+                address: order.restaurant_id.address
+            },
+            items: order.order_items.map(item => ({
+                id: item._id,
+                menu_name: item.menu_id.name,
+                quantity: item.quantity,
+                price_per_item: item.menu_id.price,
+                total_price: item.price,
+                status: item.status,
+                createdAt: item.createdAt,
+                updatedAt: item.updatedAt
+            }))
+        };
+
+        res.status(200).json(response);
     } catch (error) {
+        console.error('Error tracking order:', error);
         res.status(500).json({ message: 'Error tracking order', error });
     }
 };
@@ -107,8 +165,17 @@ const trackOrder = async (req, res) => {
 // View order history
 const viewOrderHistory = async (req, res) => {
     try {
-        const customer_id = req.user.id; // Assuming the auth middleware attaches the user ID
-        const orders = await Order.find({ customer_id }).populate('restaurant').populate('items.menu');
+        const customer_id = req.user.userId; // Assuming the auth middleware attaches the user ID
+        const orders = await Order.find({ customer_id })
+            .populate('restaurant_id', 'name address') // Populate restaurant details
+            .populate({
+                path: 'order_items',
+                populate: {
+                    path: 'menu_id',
+                    select: 'name price' // Populate the menu items in the order history
+                }
+            });
+
         res.status(200).json(orders);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching order history', error });
