@@ -1,12 +1,34 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const restaurantSchema = new mongoose.Schema({
-    owner_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-    name: { type: String, required: true },
-    address: { type: String, required: true },
-    hours_of_operation: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
-});
+// Define the schema for Restaurant
+const restaurantSchema = new Schema({
+    owner_id: {
+        type: Schema.Types.ObjectId,
+        ref: 'User', // Reference to the User model (owner of the restaurant)
+        required: true
+    },
+    name: {
+        type: String,
+        required: true
+    },
+    address: {
+        type: String,
+        required: true
+    },
+    hours_of_operation: {
+        type: String,
+        required: true
+    },
+    menu_items: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: 'MenuItem' // Reference to the MenuItem model
+        }
+    ]
+}, { timestamps: true });
 
-module.exports = mongoose.model('Restaurant', restaurantSchema);
+// Create a model based on the schema
+const Restaurant = mongoose.model('Restaurant', restaurantSchema);
+
+module.exports = Restaurant;

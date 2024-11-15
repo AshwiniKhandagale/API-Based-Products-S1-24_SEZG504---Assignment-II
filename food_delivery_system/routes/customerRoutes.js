@@ -1,9 +1,13 @@
 const express = require('express');
-const { browseRestaurants, searchMenus, placeOrder, trackOrder, viewOrderHistory } = require('../controllers/customerController');
-const authMiddleware = require('../middlewares/authMiddleware');
+const { 
+    browseRestaurants, 
+    searchMenus, 
+    placeOrder, 
+    trackOrder, 
+    viewOrderHistory 
+} = require('../controllers/customerController');
+const authMiddleware = require('../middlewares/authMiddleware'); // Assuming this middleware checks JWT
 const router = express.Router();
-
-
 
 /**
  * @swagger
@@ -18,11 +22,13 @@ const router = express.Router();
  *   get:
  *     summary: Browse restaurants
  *     tags: [Customers]
+ *     security:
+ *       - BearerAuth: []  # This enables token-based authentication for this route
  *     responses:
  *       200:
  *         description: List of restaurants
  */
-router.get('/restaurants',authMiddleware("Customer"), browseRestaurants);
+router.get('/restaurants', authMiddleware("Customer"), browseRestaurants);
 
 /**
  * @swagger
@@ -36,11 +42,13 @@ router.get('/restaurants',authMiddleware("Customer"), browseRestaurants);
  *         schema:
  *           type: string
  *         description: Search term
+ *     security:
+ *       - BearerAuth: []  # This enables token-based authentication for this route
  *     responses:
  *       200:
  *         description: List of menu items
  */
-router.get('/menus',authMiddleware("Customer"), searchMenus);
+router.get('/menus', authMiddleware("Customer"), searchMenus);
 
 /**
  * @swagger
@@ -55,30 +63,32 @@ router.get('/menus',authMiddleware("Customer"), searchMenus);
  *           schema:
  *             type: object
  *             required:
- *               - restaurant_id
+ *               - restaurant_name
  *               - items
  *             properties:
- *               restaurant_id:
+ *               restaurant_name:
  *                 type: string
  *               items:
  *                 type: array
  *                 items:
  *                   type: object
  *                   required:
- *                     - menu_id
+ *                     - menu_name
  *                     - quantity
  *                   properties:
- *                     menu_id:
+ *                     menu_name:
  *                       type: string
  *                     quantity:
  *                       type: integer
+ *     security:
+ *       - BearerAuth: []  # This enables token-based authentication for this route
  *     responses:
  *       201:
  *         description: Order placed successfully
  *       400:
  *         description: Bad request
  */
-router.post('/orders',authMiddleware("Customer"), placeOrder);
+router.post('/orders', authMiddleware("Customer"), placeOrder);
 
 /**
  * @swagger
@@ -93,13 +103,15 @@ router.post('/orders',authMiddleware("Customer"), placeOrder);
  *         schema:
  *           type: string
  *         description: Order ID
+ *     security:
+ *       - BearerAuth: []  # This enables token-based authentication for this route
  *     responses:
  *       200:
  *         description: Order status
  *       404:
  *         description: Order not found
  */
-router.get('/orders/:orderId',authMiddleware("Customer"), trackOrder);
+router.get('/orders/:orderId', authMiddleware("Customer"), trackOrder);
 
 /**
  * @swagger
@@ -107,10 +119,12 @@ router.get('/orders/:orderId',authMiddleware("Customer"), trackOrder);
  *   get:
  *     summary: View order history
  *     tags: [Customers]
+ *     security:
+ *       - BearerAuth: []  # This enables token-based authentication for this route
  *     responses:
  *       200:
  *         description: List of past orders
  */
-router.get('/order-history',authMiddleware("Customer"),viewOrderHistory);
+router.get('/order-history', authMiddleware("Customer"), viewOrderHistory);
 
 module.exports = router;

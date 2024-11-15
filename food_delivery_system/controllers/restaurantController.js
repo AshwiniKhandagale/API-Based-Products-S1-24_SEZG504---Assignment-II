@@ -22,6 +22,7 @@ const addRestaurant = async (req, res) => {
     }
 };
 
+// Manage menus: Add or update menu items
 const manageMenus = async (req, res) => {
     try {
         const { name, description, price, availability } = req.body;
@@ -66,7 +67,7 @@ const manageMenus = async (req, res) => {
 // View restaurant orders
 const viewOrders = async (req, res) => {
     try {
-        const restaurant_id = req.user.user_id;
+        const restaurant_id = req.user.user_id; // Assuming the restaurant's owner ID is linked with user_id
         const orders = await Order.find({ restaurant: restaurant_id })
             .populate('customer')
             .populate('items.menu');
@@ -99,37 +100,37 @@ const updateRestaurantDetails = async (req, res) => {
     }
 };
 
-//remove item from menu
-const deleteFoodMenu = async(req, res) =>{
+// Remove item from menu
+const deleteFoodMenu = async (req, res) => {
     try {
         const foodId = req.params.id;
         console.log(foodId);
         if (!foodId) {
-          return res.status(404).send({
-            success: false,
-            message: "provide food id",
-          });
+            return res.status(404).send({
+                success: false,
+                message: "Provide food ID",
+            });
         }
         const food = await Menu.findById(foodId);
         if (!food) {
-          return res.status(404).send({
-            success: false,
-            message: "No Food Found with id",
-          });
+            return res.status(404).send({
+                success: false,
+                message: "No food found with the provided ID",
+            });
         }
         await Menu.findByIdAndDelete(foodId);
         res.status(200).send({
-          success: true,
-          message: "Food Item Deleted ",
+            success: true,
+            message: "Food item deleted successfully",
         });
-      } catch (error) {
+    } catch (error) {
         console.log(error);
         res.status(500).send({
-          success: false,
-          message: "Eror In Delete Food APi",
-          error,
+            success: false,
+            message: "Error in deleting food item",
+            error,
         });
-      }
+    }
 };
 
 module.exports = {

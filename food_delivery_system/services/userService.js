@@ -15,6 +15,29 @@ const registerUser = async (userData) => {
     // Hash the password before saving
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Role-specific validations for the profile
+    if (role === 'Delivery Personnel') {
+        if (!profile.vehicleType) {
+            throw createError(400, 'Vehicle type is required for Delivery Personnel');
+        }
+    }
+
+    if (role === 'Customer') {
+        if (!profile.deliveryAddress || !profile.deliveryAddress.street || !profile.deliveryAddress.city || !profile.deliveryAddress.postalCode || !profile.deliveryAddress.country) {
+            throw createError(400, 'Complete delivery address is required for Customers');
+        }
+    }
+
+    if (role === 'Restaurant Owner') {
+        if (!profile.restaurantDetails) {
+            throw createError(400, 'Restaurant details are required for Restaurant Owners');
+        }
+        const { restaurantName, restaurantAddress, hoursOfOperation } = profile.restaurantDetails;
+        if (!restaurantName || !restaurantAddress || !hoursOfOperation) {
+            throw createError(400, 'Restaurant name, address, and hours of operation are required for Restaurant Owners');
+        }
+    }
+
     // Create a new user with profile information
     const user = new User({
         email,
