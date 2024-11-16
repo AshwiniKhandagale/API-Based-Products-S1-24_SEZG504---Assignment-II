@@ -65,11 +65,14 @@ router.post('/', authMiddleware('Restaurant Owner'), addRestaurant);
  *           schema:
  *             type: object
  *             required:
+ *               - restaurant_id
  *               - name
  *               - description
  *               - price
  *               - availability
  *             properties:
+ *               restaurant_id:
+ *                 type: string
  *               name:
  *                 type: string
  *               description:

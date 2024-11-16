@@ -38,57 +38,62 @@ const addRestaurant = async (req, res) => {
     }
 };
 
-// Manage menus: Add, update, or remove menu items
 const manageMenus = async (req, res) => {
     try {
-        const { name, description, price, availability } = req.body;
-
-        // Validate required fields
-        if (!name || !description || price == null || availability == null) {
-            return res.status(400).json({ message: 'Name, description, price, and availability are required' });
-        }
-
-        // Validate price and availability
-        if (typeof price !== 'number' || typeof availability !== 'boolean') {
-            return res.status(400).json({ message: 'Price must be a number and availability must be a boolean' });
-        }
-
-        // Find restaurant by owner_id
-        const restaurant = await Restaurant.findOne({ owner_id: req.user.userId });
-
-        if (!restaurant) {
-            return res.status(404).json({ message: 'No restaurant found for this user' });
-        }
-
-        // Check if the menu item already exists for the restaurant
-        let menuItem = await Menu.findOne({ name, restaurant_id: restaurant._id });
-        if (menuItem) {
-            // Update the existing menu item
-            menuItem.description = description;
-            menuItem.price = price;
-            menuItem.availability = availability;
-        } else {
-            // Create a new menu item
-            menuItem = new Menu({
-                restaurant_id: restaurant._id,
-                name,
-                description,
-                price,
-                availability,
-            });
-        }
-
-        // Save the menu item (add or update)
+      const { restaurant_id, name, description, price, availability } = req.body;
+  
+      // Validate required fields
+      if (!restaurant_id || !name || !description || price == null || availability == null) {
+        return res.status(400).json({ message: 'Restaurant ID, name, description, price, and availability are required' });
+      }
+  
+      // Validate price and availability
+      if (typeof price !== 'number' || typeof availability !== 'boolean') {
+        return res.status(400).json({ message: 'Price must be a number and availability must be a boolean' });
+      }
+  
+      // Find the restaurant by restaurant_id
+      const restaurant = await Restaurant.findById(restaurant_id);
+  
+      if (!restaurant) {
+        return res.status(404).json({ message: 'Restaurant not found' });
+      }
+  
+      // Check if the menu item already exists for the restaurant
+      let menuItem = await Menu.findOne({ name, restaurant_id: restaurant._id });
+      if (menuItem) {
+        // Update the existing menu item
+        menuItem.description = description;
+        menuItem.price = price;
+        menuItem.availability = availability;
+      } else {
+        // Create a new menu item
+        menuItem = new Menu({
+          restaurant_id: restaurant._id,
+          name,
+          description,
+          price,
+          availability,
+        });
+  
+        // Save the new menu item
         await menuItem.save();
-        res.status(201).json({ message: 'Menu item created/updated', menuItem });
-
+  
+        // Add the new menu item ID to the restaurant's menu_items array
+        restaurant.menu_items.push(menuItem._id);
+        await restaurant.save();
+      }
+  
+      // Save the updated menu item (if it was modified)
+      await menuItem.save();
+      res.status(201).json({ message: 'Menu item created/updated', menuItem });
+  
     } catch (error) {
-        console.error('Error managing menu:', error);
-        res.status(500).json({ message: 'Error managing menu', error });
+      console.error('Error managing menu:', error);
+      res.status(500).json({ message: 'Error managing menu', error });
     }
-};
-
-
+  };
+  
 // Remove item from menu
 
 const removeMenuItem = async (req, res) => {
