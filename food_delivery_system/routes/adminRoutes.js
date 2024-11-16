@@ -22,23 +22,60 @@ const auth = require('../middlewares/authMiddleware');  // Ensure JWT and role-b
  *       required: true
  *       content:
  *         application/json:
- *           schema:
+*           schema:
  *             type: object
  *             required:
- *               - username
  *               - email
  *               - password
  *               - role
  *             properties:
- *               username:
- *                 type: string
  *               email:
  *                 type: string
  *               password:
  *                 type: string
  *               role:
  *                 type: string
- *                 enum: [Administrator, Restaurant Owner, Customer]
+ *                 enum: ['Customer', 'Restaurant Owner', 'Delivery Personnel', 'Administrator']
+ *               profile:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                   contactDetails:
+ *                     type: string
+ *                   address:
+ *                     type: string
+ *                   vehicleType:
+ *                     type: string
+ *                   deliveryAddress:
+ *                     type: object
+ *                     properties:
+ *                       street:
+ *                         type: string
+ *                       city:
+ *                         type: string
+ *                       postalCode:
+ *                         type: string
+ *                       country:
+ *                         type: string
+ *                   paymentDetails:
+ *                     type: object
+ *                     properties:
+ *                       cardNumber:
+ *                         type: string
+ *                       expirationDate:
+ *                         type: string
+ *                       cvv:
+ *                         type: string
+ *                   restaurantDetails:
+ *                     type: object
+ *                     properties:
+ *                       restaurantName:
+ *                         type: string
+ *                       restaurantAddress:
+ *                         type: string
+ *                       hoursOfOperation:
+ *                         type: string
  *     responses:
  *       201:
  *         description: User created successfully
