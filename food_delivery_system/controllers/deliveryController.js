@@ -1,43 +1,50 @@
 const Delivery = require('../models/Delivery');
-const Order = require('../models/Order');
+
+// Helper function to validate status transitions
+const isValidStatusTransition = (currentStatus, newStatus) => {
+    const validTransitions = {
+        'pending': ['picked up'],
+        'picked up': ['en route'],
+        'en route': ['delivered'],
+    };
+    return validTransitions[currentStatus]?.includes(newStatus);
+};
 
 // View available deliveries
 const viewAvailableDeliveries = async (req, res) => {
     try {
-        // Find all deliveries that are still pending
-        const availableDeliveries = await Delivery.find({ status: 'pending' }).populate('order_id', 'customer_id restaurant_id');
+        const { page = 1, limit = 10 } = req.query; // Pagination
+        const availableDeliveries = await Delivery.find({ status: 'pending' })
+            .populate('order_id', 'customer_id restaurant_id')
+            .skip((page - 1) * limit)
+            .limit(Number(limit));
 
-        res.status(200).json(availableDeliveries);
+        res.status(200).json({
+            success: true,
+            data: availableDeliveries,
+            pagination: { page: Number(page), limit: Number(limit) },
+        });
     } catch (error) {
         console.error('Error fetching available deliveries:', error);
         res.status(500).json({ message: 'Error fetching available deliveries', error });
     }
 };
 
-// Accept delivery
+// Accept a delivery
 const acceptDelivery = async (req, res) => {
-    const { deliveryId } = req.params;  // Delivery ID passed in the URL
-    const deliveryPersonnelId = req.user.id;  // Assuming the delivery personnel ID comes from the authenticated user (from JWT)
-
-    console.log("deliveryId : ", deliveryId);
-    console.log("DP ID : ", deliveryPersonnelId);
+    const { deliveryId } = req.params;
+    const deliveryPersonnelId = req.user.id;
 
     try {
-        const delivery = await Delivery.findById(deliveryId);
+        const delivery = await Delivery.findOneAndUpdate(
+            { _id: deliveryId, status: 'pending' },
+            { delivery_personnel_id: deliveryPersonnelId, status: 'picked up' },
+            { new: true }
+        );
 
         if (!delivery) {
-            return res.status(404).json({ message: 'Delivery not found' });
+            return res.status(404).json({ message: 'Delivery not found or already accepted' });
         }
-
-        // Check if the delivery has already been accepted or completed
-        if (delivery.status !== 'pending') {
-            return res.status(400).json({ message: 'This delivery cannot be accepted, it is already in progress or completed' });
-        }
-
-        // Assign the delivery to the delivery personnel and update the status to "accepted"
-        delivery.delivery_personnel_id = deliveryPersonnelId;
-        delivery.status = 'accepted';  // Update the status to accepted
-        await delivery.save();
 
         res.status(200).json({ message: 'Delivery accepted', delivery });
     } catch (error) {
@@ -45,7 +52,6 @@ const acceptDelivery = async (req, res) => {
         res.status(500).json({ message: 'Error accepting delivery', error });
     }
 };
-
 
 // Track delivery status
 const trackDeliveryStatus = async (req, res) => {
@@ -59,27 +65,30 @@ const trackDeliveryStatus = async (req, res) => {
             return res.status(404).json({ message: 'Delivery not found' });
         }
 
-        // Update delivery status
-        if (['pending','picked up', 'en route', 'delivered'].includes(status)) {
-            delivery.status = status;
-            await delivery.save();
-            res.status(200).json({ message: 'Delivery status updated', delivery });
-        } else {
-            res.status(400).json({ message: 'Invalid status value' });
+        if (!isValidStatusTransition(delivery.status, status)) {
+            return res.status(400).json({
+                message: `Invalid status transition from ${delivery.status} to ${status}`,
+            });
         }
+
+        delivery.status = status;
+        await delivery.save();
+
+        res.status(200).json({ message: 'Delivery status updated', delivery });
     } catch (error) {
-        res.status(400).json({ message: 'Error updating delivery status', error });
+        console.error('Error updating delivery status:', error);
+        res.status(500).json({ message: 'Error updating delivery status', error });
     }
 };
 
 // Manage delivery availability
 const manageDeliveryAvailability = async (req, res) => {
     const { available } = req.body;
-    const deliveryPersonnelId = req.user.id; // Assuming auth middleware adds user ID to req.user
+    const deliveryPersonnelId = req.user.id;
 
     try {
         const deliveryPersonnel = await Delivery.findOneAndUpdate(
-            { personnelId: deliveryPersonnelId },
+            { delivery_personnel_id: deliveryPersonnelId },
             { available },
             { new: true, runValidators: true }
         );
@@ -90,7 +99,8 @@ const manageDeliveryAvailability = async (req, res) => {
 
         res.status(200).json({ message: 'Delivery availability updated', deliveryPersonnel });
     } catch (error) {
-        res.status(400).json({ message: 'Error updating delivery availability', error });
+        console.error('Error updating delivery availability:', error);
+        res.status(500).json({ message: 'Error updating delivery availability', error });
     }
 };
 
@@ -98,5 +108,5 @@ module.exports = {
     viewAvailableDeliveries,
     acceptDelivery,
     trackDeliveryStatus,
-    manageDeliveryAvailability
+    manageDeliveryAvailability,
 };
