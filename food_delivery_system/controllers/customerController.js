@@ -105,24 +105,38 @@ const placeOrder = async (req, res) => {
         res.status(500).json({ message: 'An error occurred while placing the order' });
     }
 };
+async function fetchOrderById(orderId) {
+    try {
+        const order = await Order.findById(orderId)
+            .populate('restaurant_id', 'name address'); // Populate restaurant details
+        return order;
+    } catch (error) {
+        throw new Error(`Error fetching order: ${error.message}`);
+    }
+}
+async function fetchOrderItems(orderId) {
+    try {
+        const orderItems = await OrderItem.find({ order_id: orderId }) // Fetch order items related to the order
+            .populate('menu_id', 'name price'); // Populate menu details
+        return orderItems;
+    } catch (error) {
+        throw new Error(`Error fetching order items: ${error.message}`);
+    }
+}
 
 
 // Track an order
 const trackOrder = async (req, res) => {
     try {
         const { orderId } = req.params;
+        const order = await fetchOrderById(orderId);
 
-        // Find the order and populate related fields
-        const order = await Order.findById(orderId)
-            .populate('restaurant_id', 'name address') // Populate restaurant details
-            .populate({
-                path: 'order_items', // Populate order items
-                populate: {
-                    path: 'menu_id', // Populate menu details within order items
-                    select: 'name price' // Select specific fields for menu
-                }
-            });
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
 
+        // Fetch order items for the order
+        const orderItems = await fetchOrderItems(orderId);
         if (!order) {
             return res.status(404).json({ message: 'Order not found' });
         }
@@ -139,7 +153,7 @@ const trackOrder = async (req, res) => {
                 name: order.restaurant_id.name,
                 address: order.restaurant_id.address
             },
-            items: order.order_items.map(item => ({
+            items: orderItems.map(item => ({
                 id: item._id,
                 menu_name: item.menu_id.name,
                 quantity: item.quantity,
@@ -161,22 +175,30 @@ const trackOrder = async (req, res) => {
 // View order history
 const viewOrderHistory = async (req, res) => {
     try {
-        const customer_id = req.user.userId; // Assuming the auth middleware attaches the user ID
-        const orders = await Order.find({ customer_id })
-            .populate('restaurant_id', 'name address') // Populate restaurant details
-            .populate({
-                path: 'order_items',
-                populate: {
-                    path: 'menu_id',
-                    select: 'name price' // Populate the menu items in the order history
-                }
-            });
+        const customerId = req.user.userId;
+        // Fetch all orders for the customer, populating restaurant details
+        const orders = await Order.find({ customer_id: customerId })
+            .populate('restaurant_id', 'name address');
+        if (!orders || orders.length === 0) {
+            return res.status(404).json({ message: 'No orders found.' });
+        }
 
-        res.status(200).json(orders);
+        // Populate order items and menu details for each order
+        const populatedOrders = await Promise.all(
+            orders.map(async (order) => {
+                const orderItems = await fetchOrderItems(order._id); // Fetch populated order items
+                return {
+                    ...order.toObject(),
+                    order_items: orderItems, // Attach populated order items
+                };
+            })
+        );
+        res.status(200).json(populatedOrders);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching order history', error });
+        res.status(500).json({ message: 'Error fetching order history', error: error.message });
     }
 };
+
 
 module.exports = {
     browseRestaurants,
