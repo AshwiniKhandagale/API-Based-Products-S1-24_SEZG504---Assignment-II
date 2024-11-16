@@ -34,23 +34,19 @@ const placeOrder = async (req, res) => {
        
         const customer_id = req.user.userId; // Access customer_id from authenticated user (via middleware)
         const { restaurant_name, items } = req.body;
-
+        
         // Find restaurant by name
         const restaurant = await Restaurant.findOne({ name: restaurant_name });
         if (!restaurant) {
             return res.status(400).json({ message: 'Restaurant not found.' });
         }
-
+        
         // Validate menu items
         const menuItems = await Menu.find({
             name: { $in: items.map(item => item.menu_name) },
             restaurant_id: restaurant.owner_id
         });
-
-        if (menuItems.length !== items.length) {
-            return res.status(400).json({ message: 'Some menu items are invalid or not available.' });
-        }
-
+        
         // Create the order with customer_id
         const newOrder = new Order({
             customer_id,
