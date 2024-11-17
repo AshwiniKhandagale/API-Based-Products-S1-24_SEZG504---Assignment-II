@@ -11,7 +11,21 @@ const options = {
         },
         servers: [
             {
-                url: 'http://localhost:5000',
+                url: process.env.BASE_URL || 'http://localhost:5000', 
+            },
+        ],
+        components: {
+            securitySchemes: {
+                BearerAuth: {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT',
+                },
+            },
+        },
+        security: [
+            {
+                BearerAuth: [], // Applying the Bearer token security globally to all routes
             },
         ],
     },
