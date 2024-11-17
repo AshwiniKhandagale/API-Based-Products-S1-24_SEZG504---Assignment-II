@@ -5,13 +5,48 @@ const OrderItem = require('../models/OrderItem');
 const Delivery = require('../models/Delivery');
 const Customer = require('../models/User');
 
+async function fetchMenuById(menuId) {
+    try {
+        const menu = await Menu.findById(menuId).select('name price'); 
+        return menu;
+    } catch (error) {
+        throw new Error(`Error fetching menu: ${error.message}`);
+    }
+}
+
 // Browse restaurants
 const browseRestaurants = async (req, res) => {
     try {
+        // Fetch all restaurants
         const restaurants = await Restaurant.find();
-        res.status(200).json(restaurants);
+        
+        // If no restaurants found, return an empty array
+        if (!restaurants || restaurants.length === 0) {
+            return res.status(404).json({ message: 'No restaurants found.' });
+        }
+
+        // Iterate over restaurants and fetch menu details for each
+        const populatedRestaurants = await Promise.all(
+            restaurants.map(async (restaurant) => {
+                const populatedMenus = await Promise.all(
+                    restaurant.menu_items.map(async (menuId) => {
+                        const menu = await fetchMenuById(menuId); // Fetch each menu by its ID
+                        return menu;
+                    })
+                );
+
+                // Return restaurant with populated menu items
+                return {
+                    ...restaurant.toObject(),
+                    menu_items: populatedMenus,
+                };
+            })
+        );
+
+        res.status(200).json(populatedRestaurants);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching restaurants', error });
+        console.error(error);
+        res.status(500).json({ message: 'Error fetching restaurants', error: error.message });
     }
 };
 
