@@ -11,7 +11,7 @@ const options = {
         },
         servers: [
             {
-                url: 'http://localhost:5000',  // Update this URL to match your API's base URL
+                url: process.env.BASE_URL || 'http://localhost:5000', 
             },
         ],
         components: {
