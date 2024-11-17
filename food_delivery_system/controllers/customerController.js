@@ -138,7 +138,8 @@ const placeOrder = async (req, res) => {
             customer_id: newOrder.customer_id,
             restaurant_id: newOrder.restaurant_id,
             status: newOrder.status,
-            scheduledTime: newOrder.scheduledTime,
+            // Only include scheduledTime if it's not null
+            ...(newOrder.scheduledTime && { scheduledTime: newOrder.scheduledTime }),
             createdAt: newOrder.createdAt,
             updatedAt: newOrder.updatedAt,
             order_items: orderItems
