@@ -79,7 +79,7 @@ const placeOrder = async (req, res) => {
         // Validate menu items
         const menuItems = await Menu.find({
             name: { $in: items.map(item => item.menu_name) },
-            restaurant_id: restaurant.owner_id
+            restaurant_id: restaurant._id
         });
         
         // Create the order with customer_id
@@ -98,6 +98,9 @@ const placeOrder = async (req, res) => {
         const orderItems = await Promise.all(
             items.map(async (item) => {
                 const menuItem = menuItems.find(menu => menu.name === item.menu_name);
+                 if (!menuItem) {
+                    return res.status(400).json({ message: `Menu item "${item.menu_name}" not found in restaurant's menu.` });
+                }
                 const orderItem = new OrderItem({
                     order_id: newOrder._id,
                     customer_id,
@@ -110,6 +113,12 @@ const placeOrder = async (req, res) => {
                     updatedAt: new Date()
                 });
                 await orderItem.save();
+                // Add the OrderItem _id to the order's order_items field
+                newOrder.order_items.push(orderItem._id);
+
+                // Save the updated order with the new order_items
+                await newOrder.save();
+
                 return {
                     id: orderItem._id,
                     menu_name: menuItem.name,
